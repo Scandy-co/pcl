@@ -1,4 +1,4 @@
-if(WITH_OPENNI)
+if(false)
   PCL_ADD_EXECUTABLE(pcl_openni_grabber_example ${SUBSYS_NAME} openni_grabber_example.cpp)
   target_link_libraries(pcl_openni_grabber_example pcl_common pcl_io)
 

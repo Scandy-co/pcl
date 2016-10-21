@@ -60,7 +60,8 @@ using namespace pcl;
 
 /** \brief Save a textureMesh object to obj file */
 int
-saveOBJFile (const std::string &file_name,
+saveOBJFile (const std::string &file_path,
+             const std::string &file_name,
              const pcl::TextureMesh &tex_mesh, unsigned precision)
 {
   if (tex_mesh.cloud.data.empty ())
@@ -72,10 +73,11 @@ saveOBJFile (const std::string &file_name,
   // Open file
   std::ofstream fs;
   fs.precision (precision);
-  fs.open (file_name.c_str ());
+  fs.open (file_path + "/" + file_name.c_str ());
 
   // Define material file
-  std::string mtl_file_name = file_name.substr (0, file_name.find_last_of (".")) + ".mtl";
+  std::string mtl_file_name = file_path + "/" + (file_name.substr  (0, file_name.find_last_of (".")) + ".mtl");
+  cout << "mtl file name: " << mtl_file_name << endl;
   // Strip path for "mtllib" command
   std::string mtl_file_name_nopath = mtl_file_name;
   mtl_file_name_nopath.erase (0, mtl_file_name.find_last_of ('/') + 1);
@@ -204,7 +206,7 @@ saveOBJFile (const std::string &file_name,
   PCL_INFO ("Writting faces...\n");
   for (int m = 0; m < nr_meshes; ++m)
   {
-    if (m > 0) 
+    if (m > 0)
       f_idx += tex_mesh.tex_polygons[m-1].size ();
 
     if(tex_mesh.tex_materials.size() !=0)
@@ -287,7 +289,7 @@ void showCameras (pcl::texture_mapping::CameraVector cams, pcl::PointCloud<pcl::
     double focal = cam.focal_length;
     double height = cam.height;
     double width = cam.width;
-    
+
     // create a 5-point visual for each camera
     pcl::PointXYZ p1, p2, p3, p4, p5;
     p1.x=0; p1.y=0; p1.z=0;
@@ -337,17 +339,32 @@ void showCameras (pcl::texture_mapping::CameraVector cams, pcl::PointCloud<pcl::
     ss << "camera_" << i << "line8";
     visu.addLine (p3, p2,ss.str ());
   }
-  
+
   // add a coordinate system
   visu.addCoordinateSystem (1.0, "global");
-  
+
   // add the mesh's cloud (colored on Z axis)
   pcl::visualization::PointCloudColorHandlerGenericField<pcl::PointXYZ> color_handler (cloud, "z");
   visu.addPointCloud (cloud, color_handler, "cloud");
-  
+
   // reset camera
   visu.resetCamera ();
-  
+
+  // wait for user input
+  visu.spin ();
+}
+
+/** \brief Display a 3D representation showing the a cloud and a list of camera with their 6DOf poses */
+void showTexturedMesh (pcl::TextureMesh &polymesh )
+{
+
+  // visualization object
+  pcl::visualization::PCLVisualizer visu ("textured_object");
+  visu.addTextureMesh(polymesh);
+
+  // reset camera
+  visu.resetCamera ();
+
   // wait for user input
   visu.spin ();
 }
@@ -377,7 +394,7 @@ bool readCamPoseFile(std::string filename, pcl::TextureMapping<pcl::PointXYZ>::C
 
   char current_line[1024];
   double val;
-  
+
   // go to line 2 to read translations
   GotoLine(myReadFile, 2);
   myReadFile >> val; cam.pose (0,3)=val; //TX
@@ -403,13 +420,13 @@ bool readCamPoseFile(std::string filename, pcl::TextureMapping<pcl::PointXYZ>::C
   cam.pose (3,1) = 0.0;
   cam.pose (3,2) = 0.0;
   cam.pose (3,3) = 1.0; //Scale
-  
+
   // go to line 12 to read camera focal length and size
   GotoLine (myReadFile, 12);
-  myReadFile >> val; cam.focal_length=val; 
+  myReadFile >> val; cam.focal_length=val;
   myReadFile >> val; cam.height=val;
-  myReadFile >> val; cam.width=val;  
-  
+  myReadFile >> val; cam.width=val;
+
   // close file
   myReadFile.close ();
 
@@ -422,9 +439,9 @@ main (int argc, char** argv)
 {
 
   // read mesh from plyfile
-  PCL_INFO ("\nLoading mesh from file %s...\n", argv[1]);
+  PCL_INFO ("\nLoading mesh from file %s...\n", argv[2]);
   pcl::PolygonMesh triangles;
-  pcl::io::loadPolygonFilePLY(argv[1], triangles);
+  pcl::io::loadPolygonFilePLY(argv[2], triangles);
 
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
   pcl::fromPCLPointCloud2(triangles.cloud, *cloud);
@@ -433,7 +450,7 @@ main (int argc, char** argv)
   TextureMesh mesh;
   mesh.cloud = triangles.cloud;
   std::vector< pcl::Vertices> polygon_1;
-  
+
   // push faces into the texturemesh object
   polygon_1.resize (triangles.polygons.size ());
   for(size_t i =0; i < triangles.polygons.size (); ++i)
@@ -443,12 +460,12 @@ main (int argc, char** argv)
   mesh.tex_polygons.push_back(polygon_1);
   PCL_INFO ("\tInput mesh contains %d faces and %d vertices\n", mesh.tex_polygons[0].size (), cloud->points.size ());
   PCL_INFO ("...Done.\n");
-  
+
   // Load textures and cameras poses and intrinsics
   PCL_INFO ("\nLoading textures and camera poses...\n");
   pcl::texture_mapping::CameraVector my_cams;
-  
-  const boost::filesystem::path base_dir (".");
+
+  const boost::filesystem::path base_dir (argv[1]);
   std::string extension (".txt");
   int cpt_cam = 0;
   for (boost::filesystem::directory_iterator it (base_dir); it != boost::filesystem::directory_iterator (); ++it)
@@ -457,14 +474,14 @@ main (int argc, char** argv)
     {
       pcl::TextureMapping<pcl::PointXYZ>::Camera cam;
       readCamPoseFile(it->path ().string (), cam);
-      cam.texture_file = boost::filesystem::basename (it->path ()) + ".png";
+      cam.texture_file = boost::filesystem::basename (it->path ()) + ".jpg";
       my_cams.push_back (cam);
       cpt_cam++ ;
     }
   }
   PCL_INFO ("\tLoaded %d textures.\n", my_cams.size ());
   PCL_INFO ("...Done.\n");
-  
+
   // Display cameras to user
   PCL_INFO ("\nDisplaying cameras. Press \'q\' to continue texture mapping\n");
   showCameras(my_cams, cloud);
@@ -498,7 +515,8 @@ main (int argc, char** argv)
     if(i < my_cams.size ())
       mesh_material.tex_file = my_cams[i].texture_file;
     else
-      mesh_material.tex_file = "occluded.jpg";
+      mesh_material.tex_file = "0.jpg";
+      // mesh_material.tex_file = "occluded.jpg";
 
     mesh.tex_materials[i] = mesh_material;
   }
@@ -508,8 +526,8 @@ main (int argc, char** argv)
   PCL_INFO ("\nSorting faces by cameras...\n");
   pcl::TextureMapping<pcl::PointXYZ> tm; // TextureMapping object that will perform the sort
   tm.textureMeshwithMultipleCameras(mesh, my_cams);
-  
-  
+
+
   PCL_INFO ("Sorting faces by cameras done.\n");
   for(int i = 0 ; i <= my_cams.size() ; ++i)
   {
@@ -537,7 +555,12 @@ main (int argc, char** argv)
 
   PCL_INFO ("\nSaving mesh to textured_mesh.obj\n");
 
-  saveOBJFile ("textured_mesh.obj", mesh, 5);
+  char *path = argv[1];
+  char *obj_fname = "textured_mesh.obj";
+
+  saveOBJFile (path, obj_fname, mesh, 5);
+
+  // showTexturedMesh(mesh);
 
   return (0);
 }

@@ -64,7 +64,7 @@ if(build)
         endif(MSVC)
     endif()
 
-    if(WITH_OPENNI)
+    if(false)
         set(OPENNI_GRABBER_INCLUDES
             include/pcl/io/openni_grabber.h
             include/pcl/io/oni_grabber.h

@@ -44,8 +44,8 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointInT> std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f> >
 pcl::TextureMapping<PointInT>::mapTexture2Face (
-    const Eigen::Vector3f &p1, 
-    const Eigen::Vector3f &p2, 
+    const Eigen::Vector3f &p1,
+    const Eigen::Vector3f &p2,
     const Eigen::Vector3f &p3)
 {
   std::vector<Eigen::Vector2f, Eigen::aligned_allocator<Eigen::Vector2f> > tex_coordinates;
@@ -738,6 +738,15 @@ pcl::TextureMapping<PointInT>::showOcclusions (pcl::TextureMesh &tex_mesh, pcl::
   showOcclusions (cloud, colored_cloud, octree_voxel_size, show_nb_occlusions, max_occlusions);
 }
 
+struct PointDistFromCamIndex{
+  int cam_idx; // the index of the camera that has the "best" view of this point
+  float distance; // the distance between the point in the point cloud to the camera's center of view
+
+  // UvIndex face_index;
+
+  int pt_idx; // index in the point cloud (maybe remove this and just use a vector of PointDistFromCamIndex
+};
+
 ///////////////////////////////////////////////////////////////////////////////////////////////
 template<typename PointInT> void
 pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh &mesh, const pcl::texture_mapping::CameraVector &cameras)
@@ -752,10 +761,11 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
 
   std::vector<pcl::Vertices> faces;
 
+  //
   for (int current_cam = 0; current_cam < static_cast<int> (cameras.size ()); ++current_cam)
   {
     PCL_INFO ("Processing camera %d of %d.\n", current_cam+1, cameras.size ());
-    
+
     // transform mesh into camera's frame
     typename pcl::PointCloud<PointInT>::Ptr camera_cloud (new pcl::PointCloud<PointInT>);
     pcl::transformPointCloud (*mesh_cloud, *camera_cloud, cameras[current_cam].pose.inverse ());
@@ -765,6 +775,7 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
     std::vector<pcl::Vertices>::iterator current_face;
     std::vector<bool> visibility;
     visibility.resize (mesh.tex_polygons[current_cam].size ());
+    std::cout << "number of polygons for current cam: " << visibility.size() << std::endl;
     std::vector<UvIndex> indexes_uv_to_points;
     // for each current face
 
@@ -776,6 +787,7 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
     u_null.idx_cloud = -1;
     u_null.idx_face = -1;
 
+    // find all the visible faces for the current camera
     int cpt_invisible=0;
     for (int idx_face = 0; idx_face <  static_cast<int> (mesh.tex_polygons[current_cam].size ()); ++idx_face)
     {
@@ -832,7 +844,8 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
 
     // TODO handle case were no face could be projected
     if (visibility.size () - cpt_invisible !=0)
-    {
+    {// if there are visible faces for the current camera
+
         //create kdtree
         pcl::KdTreeFLANN<pcl::PointXY> kdtree;
         kdtree.setInputCloud (projections);
@@ -883,7 +896,7 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
                 for (size_t i = 0; i < idxNeighbors.size (); ++i)
                 {
                   if (std::max (camera_cloud->points[mesh.tex_polygons[idx_pcam][idx_face].vertices[0]].z,
-                                std::max (camera_cloud->points[mesh.tex_polygons[idx_pcam][idx_face].vertices[1]].z, 
+                                std::max (camera_cloud->points[mesh.tex_polygons[idx_pcam][idx_face].vertices[1]].z,
                                           camera_cloud->points[mesh.tex_polygons[idx_pcam][idx_face].vertices[2]].z))
                      < camera_cloud->points[indexes_uv_to_points[idxNeighbors[i]].idx_cloud].z)
                   {
@@ -950,6 +963,10 @@ pcl::TextureMapping<PointInT>::textureMeshwithMultipleCameras (pcl::TextureMesh 
 
     occluded_faces.resize (cpt_occluded_faces);
     mesh.tex_polygons.push_back (occluded_faces);
+
+    // try pushing back all the polygons for each camera so we can later determine
+    // which camera has the "best" view of a certain point
+    // mesh.tex_polygons.push_back (mesh.tex_polygons[current_cam]);
 
     visible_faces.resize (cpt_visible_faces);
     mesh.tex_polygons[current_cam].clear ();
@@ -1052,7 +1069,7 @@ pcl::TextureMapping<PointInT>::getPointUVCoordinates(const PointInT &pt, const C
     else
       cy = sizeY / 2.0;
 
-    double focal_x, focal_y; 
+    double focal_x, focal_y;
     if (cam.focal_length_w > 0)
       focal_x = cam.focal_length_w;
     else
@@ -1119,4 +1136,3 @@ pcl::TextureMapping<PointInT>::isFaceProjected (const Camera &camera, const Poin
     template class PCL_EXPORTS pcl::TextureMapping<T>;
 
 #endif /* TEXTURE_MAPPING_HPP_ */
-

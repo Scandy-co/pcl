@@ -3,8 +3,8 @@ set(SUBSYS_DESC "Point cloud CUDA libraries")
 set(SUBSYS_DEPS )
 
 OPTION(BUILD_CUDA "Build the CUDA-related subsystems" ${DEFAULT})
-
-if(BUILD_CUDA AND CUDA_FOUND)
+MESSAGE(STATUS "ETL22 pcl_cuda_module_names: ${PCL_CUDA_MODULES_NAMES} before if")
+if(BUILD_CUDA)
 
     if(CMAKE_COMPILER_IS_GNUCXX)
         string(REPLACE "-Wold-style-cast" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -15,12 +15,14 @@ if(BUILD_CUDA AND CUDA_FOUND)
         endif()
     endif()
 
+    MESSAGE(STATUS "ETL22 pcl_cuda_module_names: ${PCL_CUDA_MODULES_NAMES} inside if")
     collect_subproject_directory_names("${CMAKE_CURRENT_SOURCE_DIR}" "CMakeLists.txt" PCL_CUDA_MODULES_NAMES PCL_CUDA_MODULES_DIRS)
     set(PCL_CUDA_MODULES_NAMES_UNSORTED ${PCL_CUDA_MODULES_NAMES})
     topological_sort(PCL_CUDA_MODULES_NAMES PCL_ _DEPENDS)
     sort_relative(PCL_CUDA_MODULES_NAMES_UNSORTED PCL_CUDA_MODULES_NAMES PCL_CUDA_MODULES_DIRS)
     foreach(subdir ${PCL_CUDA_MODULES_DIRS})
         add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/${subdir}")
-    endforeach(subdir)  
-endif()
+    endforeach(subdir)
+    MESSAGE(STATUS "ETL22 pcl_cuda_module_names: ${PCL_CUDA_MODULES_NAMES} inside if at end")
 
+endif()

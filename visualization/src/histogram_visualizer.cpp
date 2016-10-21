@@ -57,10 +57,10 @@
 #include <vtkFieldData.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-pcl::visualization::PCLHistogramVisualizer::PCLHistogramVisualizer () : 
+pcl::visualization::PCLHistogramVisualizer::PCLHistogramVisualizer () :
   wins_ (),
-  exit_main_loop_timer_callback_ (vtkSmartPointer<ExitMainLoopTimerCallback>::New ()), 
-  exit_callback_ (vtkSmartPointer<ExitCallback>::New ()), 
+  exit_main_loop_timer_callback_ (vtkSmartPointer<ExitMainLoopTimerCallback>::New ()),
+  exit_callback_ (vtkSmartPointer<ExitCallback>::New ()),
   stopped_ ()
 {
 #if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
@@ -80,7 +80,7 @@ pcl::visualization::PCLHistogramVisualizer::spinOnce (int time, bool force_redra
 
   if (time <= 0)
     time = 1;
-  
+
   if (force_redraw)
   {
     for (RenWinInteractMap::iterator am_it = wins_.begin (); am_it != wins_.end (); ++am_it)
@@ -95,7 +95,7 @@ pcl::visualization::PCLHistogramVisualizer::spinOnce (int time, bool force_redra
     }
     return;
   }
-  
+
   for (RenWinInteractMap::iterator am_it = wins_.begin (); am_it != wins_.end (); ++am_it)
   {
     DO_EVERY(1.0/(*am_it).second.interactor_->GetDesiredUpdateRate (),
@@ -142,12 +142,12 @@ pcl::visualization::PCLHistogramVisualizer::spin ()
       if ((*am_it).second.interactor_->stopped)
         return;
     }
-    boost::this_thread::sleep (boost::posix_time::seconds (1));
+    // boost::this_thread::sleep (boost::posix_time::seconds (1));
   }
   while (true);
 }
 ////////////////////////////////////////////////////////////////////////////////////////////
-bool 
+bool
 pcl::visualization::PCLHistogramVisualizer::wasStopped ()
 {
   for (RenWinInteractMap::iterator am_it = wins_.begin (); am_it != wins_.end (); ++am_it)
@@ -160,11 +160,11 @@ pcl::visualization::PCLHistogramVisualizer::wasStopped ()
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-void 
-pcl::visualization::PCLHistogramVisualizer::resetStoppedFlag () 
-{ 
+void
+pcl::visualization::PCLHistogramVisualizer::resetStoppedFlag ()
+{
   for (RenWinInteractMap::iterator am_it = wins_.begin (); am_it != wins_.end (); ++am_it)
-    (*am_it).second.interactor_->stopped = false; 
+    (*am_it).second.interactor_->stopped = false;
 }
 
 #else
@@ -178,14 +178,14 @@ pcl::visualization::PCLHistogramVisualizer::spin ()
     spinOnce ();
     if (stopped_)
       break;
-    boost::this_thread::sleep (boost::posix_time::seconds (1));
+    // boost::this_thread::sleep (boost::posix_time::seconds (1));
   }
   while (true);
 }
 #endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-void 
+void
 pcl::visualization::PCLHistogramVisualizer::setBackgroundColor (const double &r, const double &g, const double &b)
 {
   /*
@@ -216,7 +216,7 @@ pcl::visualization::PCLHistogramVisualizer::setBackgroundColor (const double &r,
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-void 
+void
 pcl::visualization::PCLHistogramVisualizer::setGlobalYRange (float minp, float maxp)
 {
   for (RenWinInteractMap::iterator am_it = wins_.begin (); am_it != wins_.end (); ++am_it)
@@ -227,7 +227,7 @@ pcl::visualization::PCLHistogramVisualizer::setGlobalYRange (float minp, float m
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-void 
+void
 pcl::visualization::PCLHistogramVisualizer::updateWindowPositions ()
 {
   int posx = 0, posy = 0;
@@ -241,13 +241,13 @@ pcl::visualization::PCLHistogramVisualizer::updateWindowPositions ()
     (*am_it).second.win_->SetPosition (posx, posy);
     (*am_it).second.win_->Modified ();
     // If there is space on Y, go on Y first
-    if ((posy + win_size[1]) <= scr_size[1]) 
+    if ((posy + win_size[1]) <= scr_size[1])
       posy += win_size[1];
     // Go on X
     else
     {
       posy = 0;
-      if ((posx + win_size[0]) <= scr_size[0]) 
+      if ((posx + win_size[0]) <= scr_size[0])
         posx += win_size[0];
       else
         posx = 0;
@@ -256,7 +256,7 @@ pcl::visualization::PCLHistogramVisualizer::updateWindowPositions ()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-void 
+void
 pcl::visualization::PCLHistogramVisualizer::reCreateActor (
     const vtkSmartPointer<vtkDoubleArray> &xy_array, RenWinInteract* renwinupd, const int hsize)
 {
@@ -267,7 +267,7 @@ pcl::visualization::PCLHistogramVisualizer::reCreateActor (
   renwinupd->xy_plot_->RemoveAllDataSetInputConnections ();
 #endif
 
-  
+
   double min_max[2];
   xy_array->GetRange (min_max, 1);
 
@@ -280,17 +280,17 @@ pcl::visualization::PCLHistogramVisualizer::reCreateActor (
 
   renwinupd->xy_plot_->AddDataObjectInput (field_data);
   renwinupd->ren_->AddActor2D (renwinupd->xy_plot_);
-  
+
   renwinupd->xy_plot_->SetYTitle (""); renwinupd->xy_plot_->SetXTitle ("");
-  renwinupd->xy_plot_->SetYRange (min_max[0], min_max[1]); 
+  renwinupd->xy_plot_->SetYRange (min_max[0], min_max[1]);
   renwinupd->xy_plot_->SetXRange (0, hsize - 1);
 }
-   
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl::visualization::PCLHistogramVisualizer::createActor (
-    const vtkSmartPointer<vtkDoubleArray> &xy_array, 
+    const vtkSmartPointer<vtkDoubleArray> &xy_array,
     pcl::visualization::RenWinInteract &renwinint,
     const std::string &id, const int win_width, const int win_height)
 {
@@ -320,7 +320,7 @@ pcl::visualization::PCLHistogramVisualizer::createActor (
   xy_array->GetRange (min_max, 1);
 
   renwinint.xy_plot_->SetYTitle (""); renwinint.xy_plot_->SetXTitle ("");
-  renwinint.xy_plot_->SetYRange (min_max[0], min_max[1]); 
+  renwinint.xy_plot_->SetYRange (min_max[0], min_max[1]);
   renwinint.xy_plot_->SetXRange (0, static_cast<double> (xy_array->GetNumberOfTuples () - 1));
 
   //renwinint.xy_plot_->SetTitle (id.c_str ());
@@ -349,7 +349,7 @@ pcl::visualization::PCLHistogramVisualizer::createActor (
   renwinint.win_->AddRenderer (renwinint.ren_);
   renwinint.win_->SetSize (win_width, win_height);
   renwinint.win_->SetBorders (1);
-  
+
   // Create the interactor style
   vtkSmartPointer<pcl::visualization::PCLHistogramVisualizerInteractorStyle> style_ = vtkSmartPointer<pcl::visualization::PCLHistogramVisualizerInteractorStyle>::New ();
   style_->Initialize ();
@@ -425,7 +425,7 @@ pcl::visualization::PCLHistogramVisualizer::addFeatureHistogram (
 bool
 pcl::visualization::PCLHistogramVisualizer::addFeatureHistogram (
     const pcl::PCLPointCloud2 &cloud,
-    const std::string &field_name, 
+    const std::string &field_name,
     const int index,
     const std::string &id, int win_width, int win_height)
 {
@@ -524,7 +524,7 @@ pcl::visualization::PCLHistogramVisualizer::updateFeatureHistogram (
 bool
 pcl::visualization::PCLHistogramVisualizer::updateFeatureHistogram (
     const pcl::PCLPointCloud2 &cloud,
-    const std::string &field_name, 
+    const std::string &field_name,
     const int index,
     const std::string &id)
 {
@@ -551,7 +551,7 @@ pcl::visualization::PCLHistogramVisualizer::updateFeatureHistogram (
     return (false);
   }
   xy_array->SetNumberOfTuples (cloud.fields[field_idx].count);
-  
+
   // Compute the total size of the fields
   unsigned int fsize = 0;
   for (size_t i = 0; i < cloud.fields.size (); ++i)
@@ -600,4 +600,3 @@ pcl::visualization::PCLHistogramVisualizer::ExitCallback::Execute (
     return;
   his->stopped_ = true;
 }
-

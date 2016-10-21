@@ -424,7 +424,7 @@ PCL_ADD_INCLUDES(common "" "${pcl_config_h}")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 
 ### ---[ Set up for tests
-enable_testing()
+#enable_testing()
 
 ### ---[ Set up for examples
 #include("${PCL_SOURCE_DIR}/cmake/pcl_examples.cmake")
@@ -432,6 +432,7 @@ enable_testing()
 ### ---[ Add the libraries subdirectories
 include("${PCL_SOURCE_DIR}/cmake/pcl_targets.cmake")
 
+MESSAGE(STATUS "ETL22 pcl module names ${PCL_MODULES_NAMES}, pcl mod dirs ${PCL_MODULES_DIRS}")
 collect_subproject_directory_names("${PCL_SOURCE_DIR}" "CMakeLists.txt" PCL_MODULES_NAMES PCL_MODULES_DIRS doc)
 set(PCL_MODULES_NAMES_UNSORTED ${PCL_MODULES_NAMES})
 topological_sort(PCL_MODULES_NAMES PCL_ _DEPENDS)
@@ -439,6 +440,7 @@ sort_relative(PCL_MODULES_NAMES_UNSORTED PCL_MODULES_NAMES PCL_MODULES_DIRS)
 foreach(subdir ${PCL_MODULES_DIRS})
   add_subdirectory("${PCL_SOURCE_DIR}/${subdir}")
 endforeach(subdir)
+MESSAGE(STATUS "ETL22 pcl module names ${PCL_MODULES_NAMES}, pcl mod dirs ${PCL_MODULES_DIRS}")
 
 ### ---[ Documentation
 add_subdirectory(doc)
@@ -463,4 +465,3 @@ MAKE_DEP_GRAPH()
 ### ---[ Finish up
 PCL_WRITE_STATUS_REPORT()
 PCL_RESET_MAPS()
-

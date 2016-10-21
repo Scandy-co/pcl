@@ -1356,7 +1356,7 @@ pcl::visualization::PCLVisualizer::setPointCloudRenderingProperties (
       // Check if the mapper has scalars
       if (!actor->GetMapper ()->GetInput ()->GetPointData ()->GetScalars ())
         break;
-      
+
       // Check that scalars are not unisgned char (i.e. check if a LUT is used to colormap scalars assuming vtk ColorMode is Default)
       if (actor->GetMapper ()->GetInput ()->GetPointData ()->GetScalars ()->IsA ("vtkUnsignedCharArray"))
         break;
@@ -1367,7 +1367,7 @@ pcl::visualization::PCLVisualizer::setPointCloudRenderingProperties (
         PCL_WARN ("[setPointCloudRenderingProperties] Range max must be greater than range min!\n");
         return (false);
       }
-      
+
       // Update LUT
       actor->GetMapper ()->GetLookupTable ()->SetRange (val1, val2);
       actor->GetMapper()->UseLookupTableScalarRangeOn ();
@@ -1480,7 +1480,7 @@ pcl::visualization::PCLVisualizer::setPointCloudRenderingProperties (
       // Check if the mapper has scalars
       if (!actor->GetMapper ()->GetInput ()->GetPointData ()->GetScalars ())
         break;
-      
+
       // Check that scalars are not unisgned char (i.e. check if a LUT is used to colormap scalars assuming vtk ColorMode is Default)
       if (actor->GetMapper ()->GetInput ()->GetPointData ()->GetScalars ()->IsA ("vtkUnsignedCharArray"))
         break;
@@ -1488,7 +1488,7 @@ pcl::visualization::PCLVisualizer::setPointCloudRenderingProperties (
       // Get range limits from existing LUT
       double *range;
       range = actor->GetMapper ()->GetLookupTable ()->GetRange ();
-      
+
       actor->GetMapper ()->ScalarVisibilityOn ();
       actor->GetMapper ()->SetScalarRange (range[0], range[1]);
       vtkSmartPointer<vtkLookupTable> table;
@@ -1504,7 +1504,7 @@ pcl::visualization::PCLVisualizer::setPointCloudRenderingProperties (
       // Check if the mapper has scalars
       if (!actor->GetMapper ()->GetInput ()->GetPointData ()->GetScalars ())
         break;
-      
+
       // Check that scalars are not unisgned char (i.e. check if a LUT is used to colormap scalars assuming vtk ColorMode is Default)
       if (actor->GetMapper ()->GetInput ()->GetPointData ()->GetScalars ()->IsA ("vtkUnsignedCharArray"))
         break;
@@ -3227,6 +3227,7 @@ pcl::visualization::PCLVisualizer::addTextureMesh (const pcl::TextureMesh &mesh,
     return (false);
   }
 
+  std::cout << "in addtexturemesh before stuff" << std::endl;
   // Create points from mesh.cloud
   vtkSmartPointer<vtkPoints> poly_points = vtkSmartPointer<vtkPoints>::New ();
   vtkSmartPointer<vtkUnsignedCharArray> colors = vtkSmartPointer<vtkUnsignedCharArray>::New ();
@@ -3306,6 +3307,7 @@ pcl::visualization::PCLVisualizer::addTextureMesh (const pcl::TextureMesh &mesh,
     return (false);
   // Check if hardware support multi texture
   int texture_units = tex_manager->GetNumberOfTextureUnits ();
+  std::cout << "before texturing stuff number of texture units: "<< texture_units << std::endl;
   if ((mesh.tex_materials.size () > 1) && (texture_units > 1))
   {
     if (texture_units < mesh.tex_materials.size ())
@@ -3317,6 +3319,7 @@ pcl::visualization::PCLVisualizer::addTextureMesh (const pcl::TextureMesh &mesh,
     std::size_t tex_id = 0;
     while (tex_id < last_tex_id)
     {
+      std::cout << "in texture mesh before creating textures" << std::endl;
       vtkSmartPointer<vtkTexture> texture = vtkSmartPointer<vtkTexture>::New ();
       if (textureFromTexMaterial (mesh.tex_materials[tex_id], texture))
       {
@@ -3345,9 +3348,13 @@ pcl::visualization::PCLVisualizer::addTextureMesh (const pcl::TextureMesh &mesh,
           for (std::size_t tc = 0; tc < mesh.tex_coordinates[t].size (); ++tc)
             coordinates->InsertNextTuple2 (-1.0, -1.0);
 
+      std::cout << "about to map texture: " << tex_id << std::endl;
+
       mapper->MapDataArrayToMultiTextureAttribute(tu,
                                                   this_coordinates_name.c_str (),
                                                   vtkDataObject::FIELD_ASSOCIATION_POINTS);
+
+                                                  
       polydata->GetPointData ()->AddArray (coordinates);
       actor->GetProperty ()->SetTexture(tu, texture);
       ++tex_id;
@@ -4275,7 +4282,7 @@ pcl::visualization::PCLVisualizer::setWindowBorders (bool mode)
   if (win_)
     win_->SetBorders (mode);
 }
-   
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl::visualization::PCLVisualizer::setPosition (int x, int y)
@@ -4286,7 +4293,7 @@ pcl::visualization::PCLVisualizer::setPosition (int x, int y)
     win_->Render ();
   }
 }
- 
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl::visualization::PCLVisualizer::setSize (int xw, int yw)
@@ -4318,7 +4325,7 @@ pcl::visualization::PCLVisualizer::close ()
 void
 pcl::visualization::PCLVisualizer::removeCorrespondences (
     const std::string &id, int viewport)
-{ 
+{
   removeShape (id, viewport);
 }
 
@@ -4348,13 +4355,13 @@ pcl::visualization::PCLVisualizer::getGeometryHandlerIndex (const std::string &i
 bool
 pcl::visualization::PCLVisualizer::wasStopped () const
 {
-  if (interactor_ != NULL) 
+  if (interactor_ != NULL)
 #if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
     return (interactor_->stopped);
 #else
-    return (stopped_); 
+    return (stopped_);
 #endif
-  else 
+  else
     return (true);
 }
 
@@ -4362,11 +4369,11 @@ pcl::visualization::PCLVisualizer::wasStopped () const
 void
 pcl::visualization::PCLVisualizer::resetStoppedFlag ()
 {
-  if (interactor_ != NULL) 
+  if (interactor_ != NULL)
 #if ((VTK_MAJOR_VERSION == 5) && (VTK_MINOR_VERSION <= 4))
     interactor_->stopped = false;
 #else
-    stopped_ = false; 
+    stopped_ = false;
 #endif
 }
 
@@ -4408,7 +4415,7 @@ pcl::visualization::PCLVisualizer::ExitMainLoopTimerCallback::Execute (
   pcl_visualizer->interactor_->TerminateApp ();
 #endif
 }
-  
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 void
 pcl::visualization::PCLVisualizer::ExitCallback::Execute (
